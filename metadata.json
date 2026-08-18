@@ -1,0 +1,6 @@
+{
+  "name": "Auto Buyer Gemstones",
+  "description": "Smart game auto-buyer for gemstones with floating overlay control, accessibility gestures, and view-tree scanning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
