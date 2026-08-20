@@ -571,10 +571,20 @@ class OverlayControlService : Service() {
                 "Coordinate Macro"
             }
             val activeGemsList = config.selectedGems.split(",").filter { it.isNotBlank() }
-            val gemsSummary = if (activeGemsList.size == 3) "Все камни" else activeGemsList.joinToString("/") { gem ->
-                when (gem.trim()) { "Sapphire" -> "Сап"; "Emerald" -> "Изум"; "Ruby" -> "Руб"; else -> gem }
+            val gemsSummary = if (activeGemsList.size > 2) "Мульти-выбор" else activeGemsList.joinToString(" ⇄ ") { gem ->
+                when {
+                    gem.contains("Copper", ignoreCase = true) -> "Copper"
+                    gem.contains("Silver", ignoreCase = true) -> "Silver"
+                    gem.contains("Gold", ignoreCase = true) -> "Gold"
+                    gem.contains("Diamond", ignoreCase = true) -> "Diamond"
+                    gem.contains("Dwarves", ignoreCase = true) -> "Dwarves"
+                    gem.contains("Sap", ignoreCase = true) -> "Сап"
+                    gem.contains("Emerald", ignoreCase = true) -> "Изум"
+                    gem.contains("Ruby", ignoreCase = true) -> "Руб"
+                    else -> gem.trim()
+                }
             }
-            configText?.text = "Камни: [$gemsSummary] | Лимит: ${config.priceThreshold}\nРежим: $scanMode"
+            configText?.text = "Вкладки: [$gemsSummary] | Лимит: ${config.priceThreshold}\nРежим: $scanMode"
             
             if (config.autoBuyEnabled) {
                 toggleBtn?.text = "PAUSE MONITORING"
@@ -642,35 +652,41 @@ class OverlayControlService : Service() {
         val targetLower = config.targetItemName.lowercase().trim()
         
         val targetCategoryTab = when {
+            targetLower.contains("copper") || targetLower.contains("медь") || targetLower.contains("медн") -> "Copper"
+            targetLower.contains("silver") || targetLower.contains("серебр") -> "Silver"
+            targetLower.contains("gold") || targetLower.contains("золот") -> "Gold"
+            targetLower.contains("diamond") || targetLower.contains("алмаз") -> "Diamond"
+            targetLower.contains("dwarves") || targetLower.contains("гном") -> "Dwarves"
             targetLower.contains("сапфир") || targetLower.contains("sapphire") || targetLower.contains("sap") || targetLower.contains("сап") -> "Sap"
             targetLower.contains("изумруд") || targetLower.contains("emerald") || targetLower.contains("eme") || targetLower.contains("изм") || targetLower.contains("изум") || targetLower.contains("izumrud") -> "Emerald"
             targetLower.contains("рубин") || targetLower.contains("ruby") || targetLower.contains("rub") || targetLower.contains("руб") || targetLower.contains("rubin") -> "Ruby"
             targetLower.contains("руда") || targetLower.contains("ore") -> "Ore"
-            targetLower.contains("медь") || targetLower.contains("copper") -> "Copper"
-            targetLower.contains("серебро") || targetLower.contains("silver") -> "Silver"
-            targetLower.contains("золото") || targetLower.contains("gold") -> "Gold"
-            else -> "Emerald"
+            else -> "Copper"
         }
         val alternateTab = when (targetCategoryTab) {
+            "Copper" -> "Silver"
+            "Silver" -> "Copper"
+            "Gold" -> "Silver"
+            "Diamond" -> "Gold"
+            "Dwarves" -> "Diamond"
             "Sap" -> "Emerald"
             "Emerald" -> "Sap"
             "Ruby" -> "Emerald"
             "Ore" -> "Copper"
-            "Copper" -> "Ore"
-            "Silver" -> "Gold"
-            "Gold" -> "Silver"
-            else -> "Emerald"
+            else -> "Silver"
         }
 
         fun getTabNameRussian(tab: String): String = when (tab) {
+            "Copper" -> "Copper puzzles (Медные пазлы)"
+            "Silver" -> "Silver puzzles (Серебряные пазлы)"
+            "Gold" -> "Gold puzzles (Золотые пазлы)"
+            "Diamond" -> "Diamond puzzles (Алмазные пазлы)"
+            "Dwarves" -> "Mine dwarves (Гномы)"
             "Sap" -> "Сапфир (Sapphire)"
             "Emerald" -> "Изумруд (Emerald)"
             "Ruby" -> "Рубин (Ruby)"
             "Ore" -> "Руда (Ore)"
-            "Copper" -> "Медь (Copper)"
-            "Silver" -> "Серебро (Silver)"
-            "Gold" -> "Золото (Gold)"
-            else -> "Изумруд (Emerald)"
+            else -> "Copper puzzles (Медные пазлы)"
         }
 
         val layoutType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -806,35 +822,41 @@ class OverlayControlService : Service() {
         val targetLower = config.targetItemName.lowercase().trim()
         
         val targetCategoryTab = when {
+            targetLower.contains("copper") || targetLower.contains("медь") || targetLower.contains("медн") -> "Copper"
+            targetLower.contains("silver") || targetLower.contains("серебр") -> "Silver"
+            targetLower.contains("gold") || targetLower.contains("золот") -> "Gold"
+            targetLower.contains("diamond") || targetLower.contains("алмаз") -> "Diamond"
+            targetLower.contains("dwarves") || targetLower.contains("гном") -> "Dwarves"
             targetLower.contains("сапфир") || targetLower.contains("sapphire") || targetLower.contains("sap") || targetLower.contains("сап") -> "Sap"
             targetLower.contains("изумруд") || targetLower.contains("emerald") || targetLower.contains("eme") || targetLower.contains("изм") || targetLower.contains("изум") || targetLower.contains("izumrud") -> "Emerald"
             targetLower.contains("рубин") || targetLower.contains("ruby") || targetLower.contains("rub") || targetLower.contains("руб") || targetLower.contains("rubin") -> "Ruby"
             targetLower.contains("руда") || targetLower.contains("ore") -> "Ore"
-            targetLower.contains("медь") || targetLower.contains("copper") -> "Copper"
-            targetLower.contains("серебро") || targetLower.contains("silver") -> "Silver"
-            targetLower.contains("золото") || targetLower.contains("gold") -> "Gold"
-            else -> "Emerald"
+            else -> "Copper"
         }
         val alternateTab = when (targetCategoryTab) {
+            "Copper" -> "Silver"
+            "Silver" -> "Copper"
+            "Gold" -> "Silver"
+            "Diamond" -> "Gold"
+            "Dwarves" -> "Diamond"
             "Sap" -> "Emerald"
             "Emerald" -> "Sap"
             "Ruby" -> "Emerald"
             "Ore" -> "Copper"
-            "Copper" -> "Ore"
-            "Silver" -> "Gold"
-            "Gold" -> "Silver"
-            else -> "Emerald"
+            else -> "Silver"
         }
 
         fun getTabNameRussian(tab: String): String = when (tab) {
+            "Copper" -> "Copper puzzles (Медные пазлы)"
+            "Silver" -> "Silver puzzles (Серебряные пазлы)"
+            "Gold" -> "Gold puzzles (Золотые пазлы)"
+            "Diamond" -> "Diamond puzzles (Алмазные пазлы)"
+            "Dwarves" -> "Mine dwarves (Гномы)"
             "Sap" -> "Сапфир (Sapphire)"
             "Emerald" -> "Изумруд (Emerald)"
             "Ruby" -> "Рубин (Ruby)"
             "Ore" -> "Руда (Ore)"
-            "Copper" -> "Медь (Copper)"
-            "Silver" -> "Серебро (Silver)"
-            "Gold" -> "Золото (Gold)"
-            else -> "Изумруд (Emerald)"
+            else -> "Copper puzzles (Медные пазлы)"
         }
 
         when (calibrationStep) {
@@ -866,6 +888,8 @@ class OverlayControlService : Service() {
                         "Copper" -> updated.copy(calibratedCopperX = tempTargetX, calibratedCopperY = tempTargetY)
                         "Silver" -> updated.copy(calibratedSilverX = tempTargetX, calibratedSilverY = tempTargetY)
                         "Gold" -> updated.copy(calibratedGoldX = tempTargetX, calibratedGoldY = tempTargetY)
+                        "Diamond" -> updated.copy(calibratedDiamondX = tempTargetX, calibratedDiamondY = tempTargetY)
+                        "Dwarves" -> updated.copy(calibratedDwarvesX = tempTargetX, calibratedDwarvesY = tempTargetY)
                         "Sap" -> updated.copy(calibratedSapX = tempTargetX, calibratedSapY = tempTargetY)
                         "Emerald" -> updated.copy(calibratedEmeraldX = tempTargetX, calibratedEmeraldY = tempTargetY)
                         "Ruby" -> updated.copy(calibratedRubyX = tempTargetX, calibratedRubyY = tempTargetY)
@@ -878,6 +902,8 @@ class OverlayControlService : Service() {
                         "Copper" -> updated.copy(calibratedCopperX = tempAlternateX, calibratedCopperY = tempAlternateY)
                         "Silver" -> updated.copy(calibratedSilverX = tempAlternateX, calibratedSilverY = tempAlternateY)
                         "Gold" -> updated.copy(calibratedGoldX = tempAlternateX, calibratedGoldY = tempAlternateY)
+                        "Diamond" -> updated.copy(calibratedDiamondX = tempAlternateX, calibratedDiamondY = tempAlternateY)
+                        "Dwarves" -> updated.copy(calibratedDwarvesX = tempAlternateX, calibratedDwarvesY = tempAlternateY)
                         "Sap" -> updated.copy(calibratedSapX = tempAlternateX, calibratedSapY = tempAlternateY)
                         "Emerald" -> updated.copy(calibratedEmeraldX = tempAlternateX, calibratedEmeraldY = tempAlternateY)
                         "Ruby" -> updated.copy(calibratedRubyX = tempAlternateX, calibratedRubyY = tempAlternateY)

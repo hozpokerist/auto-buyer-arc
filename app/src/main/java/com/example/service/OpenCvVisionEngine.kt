@@ -168,7 +168,11 @@ object OpenCvVisionEngine {
         val isTargetSapphire = target.contains("сапфир") || target.contains("sapphire") || target.contains("сап") || activeTab.contains("sapphire") || activeTab.contains("сапфир")
         val isTargetGold = target.contains("золот") || target.contains("gold") || activeTab.contains("gold") || activeTab.contains("золот")
         val isTargetCopper = target.contains("мед") || target.contains("copper") || activeTab.contains("copper") || activeTab.contains("медь")
+        val isTargetSilver = target.contains("серебр") || target.contains("silver") || activeTab.contains("silver") || activeTab.contains("серебр")
+        val isPuzzleMode = target.contains("puzzle") || activeTab.contains("puzzle") || target.contains("пазл")
 
+        if (isPuzzleMode) return true
+        if (isTargetSilver) return true
         if (isTargetRuby && detected == "рубин") return true
         if (isTargetEmerald && detected == "изумруд") return true
         if (isTargetSapphire && detected == "сапфир") return true

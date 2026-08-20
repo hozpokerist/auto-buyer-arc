@@ -480,13 +480,13 @@ fun DashboardScreen(
                         .testTag("lot_name_input")
                 )
 
-                // Multi-selection Gemstones section
+                // Multi-selection Gemstones/Puzzles section
                 val selectedGemsSet = remember(config?.selectedGems) {
-                    (config?.selectedGems ?: "Sapphire,Emerald,Ruby").split(",")
+                    (config?.selectedGems ?: "Copper puzzles,Silver puzzles").split(",")
                         .map { it.trim() }
                         .filter { it.isNotEmpty() }
                         .toSet()
-                        .ifEmpty { setOf("Sapphire", "Emerald", "Ruby") }
+                        .ifEmpty { setOf("Copper puzzles", "Silver puzzles") }
                 }
 
                 Column(
@@ -497,33 +497,36 @@ fun DashboardScreen(
                         .padding(12.dp)
                 ) {
                     Text(
-                        text = "🎯 Выбор камней для скупки (мульти-выбор):",
+                        text = "🎯 Выбор вкладок/товаров для скупки (мульти-выбор):",
                         color = Color.White,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Бот будет циклически переключаться между отмеченными камнями и скупать лоты",
+                        text = "Бот будет циклически переключаться между выбранными вкладками (Copper puzzles / Silver puzzles) и скупать лоты",
                         color = Color.LightGray,
                         fontSize = 11.sp
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
                     val gemList = listOf(
-                        Triple("Sapphire", "💎 Сапфир", Color(0xFF1E88E5)),
-                        Triple("Emerald", "🟢 Изумруд", Color(0xFF43A047)),
-                        Triple("Ruby", "🔴 Рубин", Color(0xFFE53935))
+                        Triple("Copper puzzles", "🟤 Copper", Color(0xFFB87333)),
+                        Triple("Silver puzzles", "⚪ Silver", Color(0xFFC0C0C0)),
+                        Triple("Gold puzzles", "🟡 Gold", Color(0xFFFFD700)),
+                        Triple("Diamond puzzles", "💎 Diamond", Color(0xFF00E5FF)),
+                        Triple("Mine dwarves", "⛏️ Dwarves", Color(0xFFFF9800))
                     )
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         gemList.forEach { (gemId, gemLabel, gemColor) ->
                             val isChecked = selectedGemsSet.contains(gemId)
                             Box(
                                 modifier = Modifier
-                                    .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (isChecked) gemColor.copy(alpha = 0.35f) else Color(0xFF1A1A22))
                                     .border(
@@ -541,17 +544,11 @@ fun DashboardScreen(
                                         viewModel.updateSelectedGems(csv)
                                         if (newSet.isNotEmpty() && !newSet.contains(itemNameInput)) {
                                             val first = newSet.first()
-                                            val russianName = when (first) {
-                                                "Sapphire" -> "Сапфир"
-                                                "Emerald" -> "Изумруд"
-                                                "Ruby" -> "Рубин"
-                                                else -> first
-                                            }
-                                            itemNameInput = russianName
+                                            itemNameInput = first
                                             saveConfig()
                                         }
                                     }
-                                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                                    .padding(vertical = 10.dp, horizontal = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Row(
@@ -589,7 +586,7 @@ fun DashboardScreen(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val presetCategories = listOf("Изумруд", "Сапфир", "Рубин", "Золото", "Серебро", "Медь", "Руда")
+                        val presetCategories = listOf("Copper puzzles", "Silver puzzles", "Gold puzzles", "Diamond puzzles", "Mine dwarves", "Изумруд", "Сапфир", "Рубин")
                         presetCategories.forEach { cat ->
                             val isSelected = itemNameInput.equals(cat, ignoreCase = true)
                             Box(

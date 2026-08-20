@@ -41,6 +41,10 @@ class LootBuyerAccessibilityService : AccessibilityService() {
     @Volatile private var cachedTabSilverY: Float? = null
     @Volatile private var cachedTabGoldX: Float? = null
     @Volatile private var cachedTabGoldY: Float? = null
+    @Volatile private var cachedTabDiamondX: Float? = null
+    @Volatile private var cachedTabDiamondY: Float? = null
+    @Volatile private var cachedTabDwarvesX: Float? = null
+    @Volatile private var cachedTabDwarvesY: Float? = null
     @Volatile private var cachedTabSapX: Float? = null
     @Volatile private var cachedTabSapY: Float? = null
     @Volatile private var cachedTabEmeraldX: Float? = null
@@ -181,14 +185,24 @@ class LootBuyerAccessibilityService : AccessibilityService() {
         isRunning = true
         // Reset tab initialization on fresh start so tabs are recognized anew
         areTabsInitialized = false
+        cachedTabCopperX = null
+        cachedTabCopperY = null
+        cachedTabSilverX = null
+        cachedTabSilverY = null
+        cachedTabGoldX = null
+        cachedTabGoldY = null
+        cachedTabDiamondX = null
+        cachedTabDiamondY = null
+        cachedTabDwarvesX = null
+        cachedTabDwarvesY = null
+        cachedTabOreX = null
+        cachedTabOreY = null
         cachedTabSapX = null
         cachedTabSapY = null
         cachedTabEmeraldX = null
         cachedTabEmeraldY = null
         cachedTabRubyX = null
         cachedTabRubyY = null
-        cachedTabGoldX = null
-        cachedTabGoldY = null
 
         serviceScope.launch {
             AutoBuyerLogs.addLog("🚀 Запуск цикла бота. Ожидание первичного OCR-распознавания вкладок...")
@@ -323,27 +337,31 @@ class LootBuyerAccessibilityService : AccessibilityService() {
         }
 
         val displayItem = when {
+            itemName.lowercase().contains("copper") || itemName.lowercase().contains("медь") || itemName.lowercase().contains("медн") -> "Copper puzzles (Медные пазлы)"
+            itemName.lowercase().contains("silver") || itemName.lowercase().contains("серебр") -> "Silver puzzles (Серебряные пазлы)"
+            itemName.lowercase().contains("gold") || itemName.lowercase().contains("золот") -> "Gold puzzles (Золотые пазлы)"
+            itemName.lowercase().contains("diamond") || itemName.lowercase().contains("алмаз") -> "Diamond puzzles (Алмазные пазлы)"
+            itemName.lowercase().contains("dwarves") || itemName.lowercase().contains("гном") -> "Mine dwarves (Гномы)"
             itemName.lowercase().contains("изумруд") || itemName.lowercase().contains("emerald") -> "Изумруда"
             itemName.lowercase().contains("сапфир") || itemName.lowercase().contains("sapphire") -> "Сапфира"
             itemName.lowercase().contains("рубин") || itemName.lowercase().contains("ruby") -> "Рубина"
             itemName.lowercase().contains("руда") || itemName.lowercase().contains("ore") -> "Руды"
-            itemName.lowercase().contains("медь") || itemName.lowercase().contains("copper") -> "Меди"
-            itemName.lowercase().contains("серебро") || itemName.lowercase().contains("silver") -> "Серебра"
-            itemName.lowercase().contains("золото") || itemName.lowercase().contains("gold") -> "Золота"
             else -> itemName
         }
 
         return "Куплен лот $formattedQty лотов $displayItem за $formattedPrice ММТ"
     }
 
-    private fun getTabDisplayName(tabName: String): String = when (tabName) {
-        "Sapphire", "Sap" -> "Сапфир"
-        "Emerald" -> "Изумруд"
-        "Ruby" -> "Рубин"
-        "Ore" -> "Руда"
-        "Copper" -> "Медь"
-        "Silver" -> "Серебро"
-        "Gold" -> "Золото"
+    private fun getTabDisplayName(tabName: String): String = when {
+        tabName.contains("Copper", ignoreCase = true) || tabName.contains("Медь", ignoreCase = true) || tabName.contains("Медн", ignoreCase = true) -> "Copper puzzles (Медные пазлы)"
+        tabName.contains("Silver", ignoreCase = true) || tabName.contains("Серебр", ignoreCase = true) -> "Silver puzzles (Серебряные пазлы)"
+        tabName.contains("Gold", ignoreCase = true) || tabName.contains("Золот", ignoreCase = true) -> "Gold puzzles (Золотые пазлы)"
+        tabName.contains("Diamond", ignoreCase = true) || tabName.contains("Алмаз", ignoreCase = true) -> "Diamond puzzles (Алмазные пазлы)"
+        tabName.contains("Dwarves", ignoreCase = true) || tabName.contains("Гном", ignoreCase = true) -> "Mine dwarves (Гномы)"
+        tabName.contains("Sapphire", ignoreCase = true) || tabName.contains("Сап", ignoreCase = true) -> "Сапфир"
+        tabName.contains("Emerald", ignoreCase = true) || tabName.contains("Изум", ignoreCase = true) -> "Изумруд"
+        tabName.contains("Ruby", ignoreCase = true) || tabName.contains("Руб", ignoreCase = true) -> "Рубин"
+        tabName.contains("Ore", ignoreCase = true) || tabName.contains("Руда", ignoreCase = true) -> "Руда"
         else -> tabName
     }
 
@@ -356,29 +374,18 @@ class LootBuyerAccessibilityService : AccessibilityService() {
         scaleY: Float,
         config: AppConfiguration
     ): Pair<Float, Float> {
+        val lower = tabName.lowercase().trim()
         // If we have calibrated coordinates, use them first!
-        when (tabName) {
-            "Sapphire", "Sap" -> if (config.calibratedSapX != -1f && config.calibratedSapY != -1f) {
-                return Pair(config.calibratedSapX, config.calibratedSapY)
-            }
-            "Emerald" -> if (config.calibratedEmeraldX != -1f && config.calibratedEmeraldY != -1f) {
-                return Pair(config.calibratedEmeraldX, config.calibratedEmeraldY)
-            }
-            "Ruby" -> if (config.calibratedRubyX != -1f && config.calibratedRubyY != -1f) {
-                return Pair(config.calibratedRubyX, config.calibratedRubyY)
-            }
-            "Ore" -> if (config.calibratedOreX != -1f && config.calibratedOreY != -1f) {
-                return Pair(config.calibratedOreX, config.calibratedOreY)
-            }
-            "Copper" -> if (config.calibratedCopperX != -1f && config.calibratedCopperY != -1f) {
-                return Pair(config.calibratedCopperX, config.calibratedCopperY)
-            }
-            "Silver" -> if (config.calibratedSilverX != -1f && config.calibratedSilverY != -1f) {
-                return Pair(config.calibratedSilverX, config.calibratedSilverY)
-            }
-            "Gold" -> if (config.calibratedGoldX != -1f && config.calibratedGoldY != -1f) {
-                return Pair(config.calibratedGoldX, config.calibratedGoldY)
-            }
+        when {
+            lower.contains("copper") || lower.contains("медь") || lower.contains("медн") -> if (config.calibratedCopperX != -1f && config.calibratedCopperY != -1f) return Pair(config.calibratedCopperX, config.calibratedCopperY)
+            lower.contains("silver") || lower.contains("серебр") -> if (config.calibratedSilverX != -1f && config.calibratedSilverY != -1f) return Pair(config.calibratedSilverX, config.calibratedSilverY)
+            lower.contains("gold") || lower.contains("золот") -> if (config.calibratedGoldX != -1f && config.calibratedGoldY != -1f) return Pair(config.calibratedGoldX, config.calibratedGoldY)
+            lower.contains("diamond") || lower.contains("алмаз") -> if (config.calibratedDiamondX != -1f && config.calibratedDiamondY != -1f) return Pair(config.calibratedDiamondX, config.calibratedDiamondY)
+            lower.contains("dwarves") || lower.contains("гном") -> if (config.calibratedDwarvesX != -1f && config.calibratedDwarvesY != -1f) return Pair(config.calibratedDwarvesX, config.calibratedDwarvesY)
+            lower.contains("sapphire") || lower.contains("sap") || lower.contains("сап") -> if (config.calibratedSapX != -1f && config.calibratedSapY != -1f) return Pair(config.calibratedSapX, config.calibratedSapY)
+            lower.contains("emerald") || lower.contains("eme") || lower.contains("изум") -> if (config.calibratedEmeraldX != -1f && config.calibratedEmeraldY != -1f) return Pair(config.calibratedEmeraldX, config.calibratedEmeraldY)
+            lower.contains("ruby") || lower.contains("rub") || lower.contains("руб") -> if (config.calibratedRubyX != -1f && config.calibratedRubyY != -1f) return Pair(config.calibratedRubyX, config.calibratedRubyY)
+            lower.contains("ore") || lower.contains("руда") -> if (config.calibratedOreX != -1f && config.calibratedOreY != -1f) return Pair(config.calibratedOreX, config.calibratedOreY)
         }
 
         var tabBounds: Rect? = null
@@ -395,77 +402,86 @@ class LootBuyerAccessibilityService : AccessibilityService() {
             return Pair(tabX, tabY)
         }
 
-        // Fallback to calibrated coordinate percentages
+        // Fallback to coordinate percentages for tabs
         val detectedTabY = filteredLines.firstOrNull { 
-            it.text.lowercase().contains("sap") || 
-            it.text.lowercase().contains("сап") ||
-            it.text.lowercase().contains("eme") ||
-            it.text.lowercase().contains("изм") ||
-            it.text.lowercase().contains("изум") ||
-            it.text.lowercase().contains("rub") ||
-            it.text.lowercase().contains("руб") ||
-            it.text.lowercase().contains("ore") || 
-            it.text.lowercase().contains("руда")
+            it.text.lowercase().contains("copper") || 
+            it.text.lowercase().contains("silver") ||
+            it.text.lowercase().contains("gold") ||
+            it.text.lowercase().contains("diamond") ||
+            it.text.lowercase().contains("dwarves") ||
+            it.text.lowercase().contains("puzzle")
         }?.boundingBox?.centerY()?.toFloat()?.let { it * scaleY }
         
-        val tabY = detectedTabY ?: (screenHeight * 0.435f)
-        val tabX = when (tabName) {
-            "Gold" -> screenWidth * 0.125f
-            "Sapphire", "Sap" -> screenWidth * 0.375f
-            "Emerald" -> screenWidth * 0.625f
-            "Ruby" -> screenWidth * 0.875f
-            "Ore" -> screenWidth * 0.06f
-            "Copper" -> screenWidth * 0.28f
-            "Silver" -> screenWidth * 0.50f
-            else -> screenWidth * 0.625f
+        val tabY = detectedTabY ?: (screenHeight * 0.44f)
+        val tabX = when {
+            lower.contains("copper") || lower.contains("медь") -> screenWidth * 0.10f
+            lower.contains("silver") || lower.contains("серебр") -> screenWidth * 0.28f
+            lower.contains("gold") || lower.contains("золот") -> screenWidth * 0.48f
+            lower.contains("diamond") || lower.contains("алмаз") -> screenWidth * 0.68f
+            lower.contains("dwarves") || lower.contains("гном") -> screenWidth * 0.88f
+            lower.contains("sapphire") || lower.contains("sap") -> screenWidth * 0.375f
+            lower.contains("emerald") || lower.contains("eme") -> screenWidth * 0.625f
+            lower.contains("ruby") || lower.contains("rub") -> screenWidth * 0.875f
+            lower.contains("ore") -> screenWidth * 0.06f
+            else -> screenWidth * 0.10f
         }
         return Pair(tabX, tabY)
     }
 
     private fun isTabCoordinateAvailable(tabName: String, config: AppConfiguration): Boolean {
+        val lower = tabName.lowercase().trim()
         // Calibrated coordinates from DB
-        when (tabName) {
-            "Sapphire", "Sap" -> if (config.calibratedSapX != -1f && config.calibratedSapY != -1f) return true
-            "Emerald" -> if (config.calibratedEmeraldX != -1f && config.calibratedEmeraldY != -1f) return true
-            "Ruby" -> if (config.calibratedRubyX != -1f && config.calibratedRubyY != -1f) return true
-            "Ore" -> if (config.calibratedOreX != -1f && config.calibratedOreY != -1f) return true
-            "Copper" -> if (config.calibratedCopperX != -1f && config.calibratedCopperY != -1f) return true
-            "Silver" -> if (config.calibratedSilverX != -1f && config.calibratedSilverY != -1f) return true
-            "Gold" -> if (config.calibratedGoldX != -1f && config.calibratedGoldY != -1f) return true
+        when {
+            lower.contains("copper") || lower.contains("медь") || lower.contains("медн") -> if (config.calibratedCopperX != -1f && config.calibratedCopperY != -1f) return true
+            lower.contains("silver") || lower.contains("серебр") -> if (config.calibratedSilverX != -1f && config.calibratedSilverY != -1f) return true
+            lower.contains("gold") || lower.contains("золот") -> if (config.calibratedGoldX != -1f && config.calibratedGoldY != -1f) return true
+            lower.contains("diamond") || lower.contains("алмаз") -> if (config.calibratedDiamondX != -1f && config.calibratedDiamondY != -1f) return true
+            lower.contains("dwarves") || lower.contains("гном") -> if (config.calibratedDwarvesX != -1f && config.calibratedDwarvesY != -1f) return true
+            lower.contains("sapphire") || lower.contains("sap") || lower.contains("сап") -> if (config.calibratedSapX != -1f && config.calibratedSapY != -1f) return true
+            lower.contains("emerald") || lower.contains("eme") || lower.contains("изум") -> if (config.calibratedEmeraldX != -1f && config.calibratedEmeraldY != -1f) return true
+            lower.contains("ruby") || lower.contains("rub") || lower.contains("руб") -> if (config.calibratedRubyX != -1f && config.calibratedRubyY != -1f) return true
+            lower.contains("ore") || lower.contains("руда") -> if (config.calibratedOreX != -1f && config.calibratedOreY != -1f) return true
         }
         // Cached coordinates from memory (validated)
-        when (tabName) {
-            "Sapphire", "Sap" -> return cachedTabSapX != null && cachedTabSapY != null
-            "Emerald" -> return cachedTabEmeraldX != null && cachedTabEmeraldY != null
-            "Ruby" -> return cachedTabRubyX != null && cachedTabRubyY != null
-            "Ore" -> return cachedTabOreX != null && cachedTabOreY != null
-            "Copper" -> return cachedTabCopperX != null && cachedTabCopperY != null
-            "Silver" -> return cachedTabSilverX != null && cachedTabSilverY != null
-            "Gold" -> return cachedTabGoldX != null && cachedTabGoldY != null
+        when {
+            lower.contains("copper") || lower.contains("медь") || lower.contains("медн") -> return cachedTabCopperX != null && cachedTabCopperY != null
+            lower.contains("silver") || lower.contains("серебр") -> return cachedTabSilverX != null && cachedTabSilverY != null
+            lower.contains("gold") || lower.contains("золот") -> return cachedTabGoldX != null && cachedTabGoldY != null
+            lower.contains("diamond") || lower.contains("алмаз") -> return cachedTabDiamondX != null && cachedTabDiamondY != null
+            lower.contains("dwarves") || lower.contains("гном") -> return cachedTabDwarvesX != null && cachedTabDwarvesY != null
+            lower.contains("sapphire") || lower.contains("sap") || lower.contains("сап") -> return cachedTabSapX != null && cachedTabSapY != null
+            lower.contains("emerald") || lower.contains("eme") || lower.contains("изум") -> return cachedTabEmeraldX != null && cachedTabEmeraldY != null
+            lower.contains("ruby") || lower.contains("rub") || lower.contains("руб") -> return cachedTabRubyX != null && cachedTabRubyY != null
+            lower.contains("ore") || lower.contains("руда") -> return cachedTabOreX != null && cachedTabOreY != null
         }
         return false
     }
 
     private fun getTabCoordinatesCached(tabName: String, config: AppConfiguration, screenWidth: Float, screenHeight: Float): Pair<Float, Float>? {
+        val lower = tabName.lowercase().trim()
         // Calibrated coordinates from DB
-        when (tabName) {
-            "Sapphire", "Sap" -> if (config.calibratedSapX != -1f && config.calibratedSapY != -1f) return Pair(config.calibratedSapX, config.calibratedSapY)
-            "Emerald" -> if (config.calibratedEmeraldX != -1f && config.calibratedEmeraldY != -1f) return Pair(config.calibratedEmeraldX, config.calibratedEmeraldY)
-            "Ruby" -> if (config.calibratedRubyX != -1f && config.calibratedRubyY != -1f) return Pair(config.calibratedRubyX, config.calibratedRubyY)
-            "Ore" -> if (config.calibratedOreX != -1f && config.calibratedOreY != -1f) return Pair(config.calibratedOreX, config.calibratedOreY)
-            "Copper" -> if (config.calibratedCopperX != -1f && config.calibratedCopperY != -1f) return Pair(config.calibratedCopperX, config.calibratedCopperY)
-            "Silver" -> if (config.calibratedSilverX != -1f && config.calibratedSilverY != -1f) return Pair(config.calibratedSilverX, config.calibratedSilverY)
-            "Gold" -> if (config.calibratedGoldX != -1f && config.calibratedGoldY != -1f) return Pair(config.calibratedGoldX, config.calibratedGoldY)
+        when {
+            lower.contains("copper") || lower.contains("медь") || lower.contains("медн") -> if (config.calibratedCopperX != -1f && config.calibratedCopperY != -1f) return Pair(config.calibratedCopperX, config.calibratedCopperY)
+            lower.contains("silver") || lower.contains("серебр") -> if (config.calibratedSilverX != -1f && config.calibratedSilverY != -1f) return Pair(config.calibratedSilverX, config.calibratedSilverY)
+            lower.contains("gold") || lower.contains("золот") -> if (config.calibratedGoldX != -1f && config.calibratedGoldY != -1f) return Pair(config.calibratedGoldX, config.calibratedGoldY)
+            lower.contains("diamond") || lower.contains("алмаз") -> if (config.calibratedDiamondX != -1f && config.calibratedDiamondY != -1f) return Pair(config.calibratedDiamondX, config.calibratedDiamondY)
+            lower.contains("dwarves") || lower.contains("гном") -> if (config.calibratedDwarvesX != -1f && config.calibratedDwarvesY != -1f) return Pair(config.calibratedDwarvesX, config.calibratedDwarvesY)
+            lower.contains("sapphire") || lower.contains("sap") || lower.contains("сап") -> if (config.calibratedSapX != -1f && config.calibratedSapY != -1f) return Pair(config.calibratedSapX, config.calibratedSapY)
+            lower.contains("emerald") || lower.contains("eme") || lower.contains("изум") -> if (config.calibratedEmeraldX != -1f && config.calibratedEmeraldY != -1f) return Pair(config.calibratedEmeraldX, config.calibratedEmeraldY)
+            lower.contains("ruby") || lower.contains("rub") || lower.contains("руб") -> if (config.calibratedRubyX != -1f && config.calibratedRubyY != -1f) return Pair(config.calibratedRubyX, config.calibratedRubyY)
+            lower.contains("ore") || lower.contains("руда") -> if (config.calibratedOreX != -1f && config.calibratedOreY != -1f) return Pair(config.calibratedOreX, config.calibratedOreY)
         }
         // Exact OCR-recognized coordinates saved in session
-        when (tabName) {
-            "Sapphire", "Sap" -> if (cachedTabSapX != null && cachedTabSapY != null) return Pair(cachedTabSapX!!, cachedTabSapY!!)
-            "Emerald" -> if (cachedTabEmeraldX != null && cachedTabEmeraldY != null) return Pair(cachedTabEmeraldX!!, cachedTabEmeraldY!!)
-            "Ruby" -> if (cachedTabRubyX != null && cachedTabRubyY != null) return Pair(cachedTabRubyX!!, cachedTabRubyY!!)
-            "Ore" -> if (cachedTabOreX != null && cachedTabOreY != null) return Pair(cachedTabOreX!!, cachedTabOreY!!)
-            "Copper" -> if (cachedTabCopperX != null && cachedTabCopperY != null) return Pair(cachedTabCopperX!!, cachedTabCopperY!!)
-            "Silver" -> if (cachedTabSilverX != null && cachedTabSilverY != null) return Pair(cachedTabSilverX!!, cachedTabSilverY!!)
-            "Gold" -> if (cachedTabGoldX != null && cachedTabGoldY != null) return Pair(cachedTabGoldX!!, cachedTabGoldY!!)
+        when {
+            lower.contains("copper") || lower.contains("медь") || lower.contains("медн") -> if (cachedTabCopperX != null && cachedTabCopperY != null) return Pair(cachedTabCopperX!!, cachedTabCopperY!!)
+            lower.contains("silver") || lower.contains("серебр") -> if (cachedTabSilverX != null && cachedTabSilverY != null) return Pair(cachedTabSilverX!!, cachedTabSilverY!!)
+            lower.contains("gold") || lower.contains("золот") -> if (cachedTabGoldX != null && cachedTabGoldY != null) return Pair(cachedTabGoldX!!, cachedTabGoldY!!)
+            lower.contains("diamond") || lower.contains("алмаз") -> if (cachedTabDiamondX != null && cachedTabDiamondY != null) return Pair(cachedTabDiamondX!!, cachedTabDiamondY!!)
+            lower.contains("dwarves") || lower.contains("гном") -> if (cachedTabDwarvesX != null && cachedTabDwarvesY != null) return Pair(cachedTabDwarvesX!!, cachedTabDwarvesY!!)
+            lower.contains("sapphire") || lower.contains("sap") || lower.contains("сап") -> if (cachedTabSapX != null && cachedTabSapY != null) return Pair(cachedTabSapX!!, cachedTabSapY!!)
+            lower.contains("emerald") || lower.contains("eme") || lower.contains("изум") -> if (cachedTabEmeraldX != null && cachedTabEmeraldY != null) return Pair(cachedTabEmeraldX!!, cachedTabEmeraldY!!)
+            lower.contains("ruby") || lower.contains("rub") || lower.contains("руб") -> if (cachedTabRubyX != null && cachedTabRubyY != null) return Pair(cachedTabRubyX!!, cachedTabRubyY!!)
+            lower.contains("ore") || lower.contains("руда") -> if (cachedTabOreX != null && cachedTabOreY != null) return Pair(cachedTabOreX!!, cachedTabOreY!!)
         }
         
         return null
@@ -488,36 +504,40 @@ class LootBuyerAccessibilityService : AccessibilityService() {
             val tX = bounds.centerX() * scaleX
             val tY = bounds.centerY() * scaleY
             val tYPercent = tY / screenHeight
+            val tXPercent = tX / screenWidth
 
             // Market category tabs are strictly located in the horizontal strip (32%..52% of screen height)
-            if (tYPercent !in 0.32f..0.52f) {
+            if (tYPercent !in 0.30f..0.54f) {
                 return
             }
 
-            if (text.contains("eme") || text.contains("изм") || text.contains("изум") ||
-                text.contains("emerald") || text.contains("izum") || text.contains("emr")) {
-                cachedTabEmeraldX = tX
-                cachedTabEmeraldY = tY
-            } else if (text.contains("rub") || text.contains("руб") || text.contains("рубин") ||
-                text.contains("ruby") || text.contains("rubin") || text.contains("pyб")) {
-                cachedTabRubyX = tX
-                cachedTabRubyY = tY
-            } else if (text.contains("sap") || text.contains("сап") || text.contains("sapphire") ||
-                text.contains("сапфир") || text.contains("can")) {
-                cachedTabSapX = tX
-                cachedTabSapY = tY
-            } else if (text.contains("ore") || text.contains("руда") || text.contains("pyдa")) {
-                cachedTabOreX = tX
-                cachedTabOreY = tY
-            } else if (text.contains("copper") || text.contains("медь") || text.contains("meдь")) {
+            if (text.contains("copper") || text.contains("copp") || text.contains("медь") || text.contains("meдь") || text.contains("медн") || (text.contains("puzzle") && tXPercent < 0.20f)) {
                 cachedTabCopperX = tX
                 cachedTabCopperY = tY
-            } else if (text.contains("silver") || text.contains("серебро") || text.contains("cepeбpo")) {
+            } else if (text.contains("silver") || text.contains("silv") || text.contains("серебро") || text.contains("cepeбpo") || text.contains("серебр") || (text.contains("puzzle") && tXPercent in 0.20f..0.40f)) {
                 cachedTabSilverX = tX
                 cachedTabSilverY = tY
-            } else if (text.contains("gold") || text.contains("золот") || text.contains("3олот")) {
+            } else if (text.contains("gold") || text.contains("золот") || text.contains("3олот") || (text.contains("puzzle") && tXPercent in 0.40f..0.60f)) {
                 cachedTabGoldX = tX
                 cachedTabGoldY = tY
+            } else if (text.contains("diamond") || text.contains("diam") || text.contains("алмаз") || (text.contains("puzzle") && tXPercent in 0.60f..0.80f)) {
+                cachedTabDiamondX = tX
+                cachedTabDiamondY = tY
+            } else if (text.contains("dwarves") || text.contains("dwarf") || text.contains("mine") || text.contains("гном")) {
+                cachedTabDwarvesX = tX
+                cachedTabDwarvesY = tY
+            } else if (text.contains("eme") || text.contains("изм") || text.contains("изум") || text.contains("emerald")) {
+                cachedTabEmeraldX = tX
+                cachedTabEmeraldY = tY
+            } else if (text.contains("rub") || text.contains("руб") || text.contains("рубин") || text.contains("ruby")) {
+                cachedTabRubyX = tX
+                cachedTabRubyY = tY
+            } else if (text.contains("sap") || text.contains("сап") || text.contains("sapphire") || text.contains("сапфир")) {
+                cachedTabSapX = tX
+                cachedTabSapY = tY
+            } else if (text.contains("ore") || text.contains("руда")) {
+                cachedTabOreX = tX
+                cachedTabOreY = tY
             }
         }
 
@@ -550,19 +570,19 @@ class LootBuyerAccessibilityService : AccessibilityService() {
         val activeGems = config.selectedGems.split(",")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .ifEmpty { listOf("Emerald", "Ruby") }
+            .ifEmpty { listOf("Copper puzzles", "Silver puzzles") }
 
-        // Multi-gem rotation between selected gems (e.g. Ruby and Emerald)
+        // Multi-gem rotation between selected gems (e.g. Copper puzzles and Silver puzzles)
         val currentGemIndex = (multiGemIndex % activeGems.size).coerceAtLeast(0)
         val targetCategoryTab = activeGems[currentGemIndex]
         val alternateTab = if (activeGems.size > 1) {
             val nextIndex = (currentGemIndex + 1) % activeGems.size
             activeGems[nextIndex]
         } else {
-            when (targetCategoryTab) {
-                "Emerald" -> "Ruby"
-                "Ruby" -> "Emerald"
-                else -> "Emerald"
+            when {
+                targetCategoryTab.contains("Copper", ignoreCase = true) -> "Silver puzzles"
+                targetCategoryTab.contains("Silver", ignoreCase = true) -> "Copper puzzles"
+                else -> "Silver puzzles"
             }
         }
         if (activeGems.size > 1) {
@@ -864,9 +884,15 @@ class LootBuyerAccessibilityService : AccessibilityService() {
                         val bottom = row.mapNotNull { it.boundingBox?.bottom }.maxOrNull() ?: 0
 
                         val actualItemName = when {
+                            targetCategoryTab.contains("copper", ignoreCase = true) || targetCategoryTab.contains("медь", ignoreCase = true) || targetCategoryTab.contains("медн", ignoreCase = true) -> "Copper puzzles"
+                            targetCategoryTab.contains("silver", ignoreCase = true) || targetCategoryTab.contains("серебр", ignoreCase = true) -> "Silver puzzles"
+                            targetCategoryTab.contains("gold", ignoreCase = true) || targetCategoryTab.contains("золот", ignoreCase = true) -> "Gold puzzles"
+                            targetCategoryTab.contains("diamond", ignoreCase = true) || targetCategoryTab.contains("алмаз", ignoreCase = true) -> "Diamond puzzles"
+                            targetCategoryTab.contains("dwarves", ignoreCase = true) || targetCategoryTab.contains("гном", ignoreCase = true) -> "Mine dwarves"
                             targetCategoryTab.contains("emerald", ignoreCase = true) || targetCategoryTab.contains("изум", ignoreCase = true) -> "Изумруд"
                             targetCategoryTab.contains("ruby", ignoreCase = true) || targetCategoryTab.contains("руб", ignoreCase = true) -> "Рубин"
                             targetCategoryTab.contains("sapphire", ignoreCase = true) || targetCategoryTab.contains("сап", ignoreCase = true) -> "Сапфир"
+                            targetCategoryTab.contains("ore", ignoreCase = true) || targetCategoryTab.contains("руда", ignoreCase = true) -> "Руда"
                             else -> targetCategoryTab
                         }
 
@@ -1370,13 +1396,15 @@ class LootBuyerAccessibilityService : AccessibilityService() {
         
         // Match English/Russian translation synonyms
         val synonyms = when {
+            lowerTarget.contains("copper") || lowerTarget.contains("медь") || lowerTarget.contains("медн") -> listOf("copper", "медь", "медн", "copp", "puzzle")
+            lowerTarget.contains("silver") || lowerTarget.contains("серебр") -> listOf("silver", "серебро", "серебр", "silv", "puzzle")
+            lowerTarget.contains("gold") || lowerTarget.contains("золот") -> listOf("gold", "золото", "золот", "puzzle")
+            lowerTarget.contains("diamond") || lowerTarget.contains("алмаз") -> listOf("diamond", "алмаз", "diam", "puzzle")
+            lowerTarget.contains("dwarves") || lowerTarget.contains("гном") -> listOf("dwarves", "dwarf", "mine", "гном")
             lowerTarget.contains("сапфир") || lowerTarget.contains("sapphire") || lowerTarget.contains("sap") || lowerTarget.contains("сап") -> listOf("сапфир", "sapphire", "sap", "сап")
             lowerTarget.contains("изумруд") || lowerTarget.contains("emerald") || lowerTarget.contains("eme") || lowerTarget.contains("изм") || lowerTarget.contains("изум") || lowerTarget.contains("izumrud") -> listOf("изумруд", "emerald", "eme", "изм", "изум", "izumrud")
             lowerTarget.contains("рубин") || lowerTarget.contains("ruby") || lowerTarget.contains("rub") || lowerTarget.contains("руб") || lowerTarget.contains("rubin") -> listOf("рубин", "ruby", "rub", "руб", "rubin")
             lowerTarget.contains("руда") || lowerTarget.contains("ore") -> listOf("руда", "ore")
-            lowerTarget.contains("медь") || lowerTarget.contains("copper") -> listOf("медь", "copper")
-            lowerTarget.contains("серебро") || lowerTarget.contains("silver") -> listOf("серебро", "silver")
-            lowerTarget.contains("золото") || lowerTarget.contains("gold") -> listOf("золото", "gold")
             else -> emptyList()
         }
         
